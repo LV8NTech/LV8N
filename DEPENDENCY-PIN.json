@@ -1,0 +1,8 @@
+{
+  "package": "@elevation/hiring-calculator",
+  "version": "1.0.0",
+  "repository": "https://github.com/LV8NTech/elevation-hiring-calculator",
+  "commit": "7c6166efe713a432131d6ce49e0075325289a725",
+  "tarball": "https://codeload.github.com/LV8NTech/elevation-hiring-calculator/tar.gz/7c6166efe713a432131d6ce49e0075325289a725",
+  "integrity": "See pnpm-lock.yaml for the immutable archive SHA-512"
+}

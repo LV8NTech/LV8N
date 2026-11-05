@@ -1,0 +1,202 @@
+openapi: 3.1.0
+info:
+  # Do not change the title, if the title changes, the import paths will be broken
+  title: Api
+  version: 0.1.0
+  description: API specification
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+    description: Health operations
+paths:
+  /hiring/demo-access:
+    post:
+      operationId: checkHiringDemoAccess
+      tags: [hiring]
+      summary: Check demo availability only; never reserves budget or contacts Meta
+      responses:
+        "200":
+          description: Access accepted; no provider request was made
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HiringDemoAccess"
+        "400":
+          $ref: "#/components/responses/HiringFailure"
+        "403":
+          $ref: "#/components/responses/HiringFailure"
+        "429":
+          $ref: "#/components/responses/HiringFailure"
+        "503":
+          $ref: "#/components/responses/HiringFailure"
+  /hiring/meta-explanation:
+    post:
+      operationId: requestHiringExplanation
+      tags: [hiring]
+      summary: Explain one unchanged fictional sample using Meta
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HiringExplanationInput"
+      responses:
+        "200":
+          description: Validated genuine Meta response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HiringExplanation"
+        "400":
+          $ref: "#/components/responses/HiringFailure"
+        "403":
+          $ref: "#/components/responses/HiringFailure"
+        "429":
+          $ref: "#/components/responses/HiringFailure"
+        "502":
+          $ref: "#/components/responses/HiringFailure"
+        "503":
+          $ref: "#/components/responses/HiringFailure"
+  /hiring/meta-question:
+    post:
+      operationId: askHiringQuestion
+      tags: [hiring]
+      summary: Answer an explicit bounded question about an unchanged fictional sample
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/HiringQuestionInput"
+      responses:
+        "200":
+          description: Validated live Meta answer with current shared quota
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HiringExplanation"
+        "400":
+          $ref: "#/components/responses/HiringFailure"
+        "403":
+          $ref: "#/components/responses/HiringFailure"
+        "429":
+          $ref: "#/components/responses/HiringFailure"
+        "502":
+          $ref: "#/components/responses/HiringFailure"
+        "503":
+          $ref: "#/components/responses/HiringFailure"
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      description: Returns server health status
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+components:
+  responses:
+    HiringFailure:
+      description: Request unavailable or rejected; no automatic retry
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/HiringExplanationError"
+  schemas:
+    HiringDemoAccess:
+      type: object
+      additionalProperties: false
+      required: [status, providerRequestMade, providerAttemptConsumed]
+      properties:
+        status: { type: string, enum: [allowed] }
+        providerRequestMade: { type: boolean, enum: [false] }
+        providerAttemptConsumed: { type: boolean, enum: [false] }
+        budget:
+          $ref: "#/components/schemas/HiringBudget"
+        model: { type: string, enum: [muse-spark-1.3] }
+    HiringBudget:
+      type: object
+      additionalProperties: false
+      required: [total, used, remaining]
+      properties:
+        total: { type: [integer, "null"], minimum: 1 }
+        used: { type: integer, minimum: 0 }
+        remaining: { type: [integer, "null"], minimum: 0 }
+    HiringQuestionTurn:
+      type: object
+      additionalProperties: false
+      required: [question, answer]
+      properties:
+        question: { type: string, minLength: 1, maxLength: 500 }
+        answer: { type: string, minLength: 1, maxLength: 4000 }
+    HiringQuestionInput:
+      type: object
+      additionalProperties: false
+      required: [profileId, consent, question, history]
+      properties:
+        profileId: { type: string, enum: [northstar-studio, juniper-kitchen, custom] }
+        inputs:
+          type: object
+          additionalProperties:
+            type: [number, string, "null"]
+        scenarioId: { type: string, minLength: 1, maxLength: 4000 }
+        consent: { type: boolean, enum: [true] }
+        question: { type: string, minLength: 1, maxLength: 500 }
+        history:
+          type: array
+          maxItems: 2
+          items:
+            $ref: "#/components/schemas/HiringQuestionTurn"
+    HiringExplanationInput:
+      type: object
+      additionalProperties: false
+      required: [profileId, consent]
+      properties:
+        profileId: { type: string, enum: [northstar-studio, juniper-kitchen, custom] }
+        inputs:
+          type: object
+          additionalProperties:
+            type: [number, string, "null"]
+        scenarioId: { type: string, minLength: 1, maxLength: 4000 }
+        consent: { type: boolean, enum: [true] }
+    HiringExplanation:
+      type: object
+      additionalProperties: false
+      required: [mode, provider, model, profileId, requestedAt, completedAt, responseId, text]
+      properties:
+        mode: { type: string, enum: [live] }
+        provider: { type: string, enum: [Meta Model API] }
+        model: { type: string, enum: [muse-spark-1.3] }
+        profileId: { type: string, enum: [northstar-studio, juniper-kitchen, custom] }
+        scenarioId: { type: string, minLength: 1, maxLength: 4000 }
+        requestedAt: { type: string, format: date-time }
+        completedAt: { type: string, format: date-time }
+        responseId: { type: string }
+        text: { type: string, minLength: 1, maxLength: 12000 }
+        budget:
+          $ref: "#/components/schemas/HiringBudget"
+    HiringExplanationError:
+      type: object
+      required: [code, message, providerAttemptConsumed]
+      properties:
+        code: { type: string }
+        message: { type: string }
+        providerAttemptConsumed: { type: boolean }
+        receivedOrigin: { type: string }
+        allowedOrigin: { type: string }
+        budget:
+          $ref: "#/components/schemas/HiringBudget"
+    HealthStatus:
+      type: object
+      properties:
+        status:
+          type: string
+      required:
+        - status
+

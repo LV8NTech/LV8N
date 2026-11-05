@@ -1,0 +1,28 @@
+kind = "web"
+previewPath = "/"
+title = "HireSense"
+description = "A standalone business decision tool from LV8N to understand how a proposed hire affects cash flow, reserves, and growth. Initial shell awaits the existing hiring calculator export; no replacement calculations or live Meta requests."
+version = "1.0.0"
+id = "artifacts/hiresense"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/" ]
+localPort = 26050
+
+[services.development]
+run = "pnpm --filter @workspace/hiresense run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/hiresense", "run", "build" ]
+serve = "static"
+publicDir = "artifacts/hiresense/dist/public"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "26050"
+BASE_PATH = "/"
